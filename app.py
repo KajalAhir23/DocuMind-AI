@@ -15,8 +15,9 @@ st.set_page_config(page_title="DocuMind AI", page_icon="📄")
 st.title("📄 DocuMind AI — PDF Q&A Chatbot")
 st.write("Upload a PDF and ask questions about it!")
 
-HF_TOKEN = os.getenv("HUGGINGFACEHUB_API_TOKEN")
-os.environ["HUGGINGFACEHUB_API_TOKEN"] = HF_TOKEN
+HF_TOKEN = os.getenv("HUGGINGFACEHUB_API_TOKEN", "")
+if HF_TOKEN:
+    os.environ["HUGGINGFACEHUB_API_TOKEN"] = HF_TOKEN
 
 uploaded_file = st.file_uploader("Upload your PDF", type="pdf")
 
