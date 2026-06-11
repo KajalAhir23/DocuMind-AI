@@ -8,11 +8,11 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_community.vectorstores import Chroma
 from langchain_community.llms import HuggingFaceHub
-from langchain.chains import RetrievalQA
+from langchain.chains.retrieval_qa.base import RetrievalQA
 import tempfile
 
 st.set_page_config(page_title="PDF Q&A Chatbot", page_icon="📄")
-st.title("📄 PDF Q&A Chatbot")
+st.title("📄 DocuMind AI — PDF Q&A Chatbot")
 st.write("Upload a PDF and ask questions about it!")
 
 uploaded_file = st.file_uploader("Upload your PDF", type="pdf")
@@ -27,19 +27,16 @@ if uploaded_file:
     documents = loader.load()
 
     st.info("Splitting text into chunks...")
-    splitter = RecursiveCharacterTextSplitter(
-        chunk_size=500,
-        chunk_overlap=50
-    )
+    splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=50)
     chunks = splitter.split_documents(documents)
-    st.success(f"Created {len(chunks)} chunks from your PDF!")
+    st.success(f"Created {len(chunks)} chunks!")
 
     st.info("Generating embeddings...")
     embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2"
     )
 
-    st.info("Storing in ChromaDB vector store...")
+    st.info("Storing in ChromaDB...")
     vectorstore = Chroma.from_documents(
         documents=chunks,
         embedding=embeddings,
