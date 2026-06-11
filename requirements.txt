@@ -1,12 +1,12 @@
 streamlit
 python-dotenv
-langchain==0.1.20
-langchain-community==0.0.38
-langchain-huggingface==0.0.3
+langchain
+langchain-community
+langchain-huggingface
 langchain-text-splitters
 chromadb
 pypdf
 sentence-transformers
-huggingface_hub==0.23.0
+huggingface_hub
 torch
 protobuf==3.20.3
