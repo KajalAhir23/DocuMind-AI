@@ -110,11 +110,11 @@ if uploaded_file:
         # Hugging Face LLM
         # -------------------------
         with st.spinner("🤖 Loading LLM..."):
-            llm = HuggingFaceEndpoint(
+            from langchain_community.llms import HuggingFaceHub
+            llm = HuggingFaceHub(
                 repo_id="google/flan-t5-large",
-                temperature=0.3,
-                max_new_tokens=256,
-                huggingfacehub_api_token=HF_TOKEN
+                huggingfacehub_api_token=HF_TOKEN,
+                model_kwargs={"temperature": 0.3, "max_new_tokens": 256}
             )
 
         # -------------------------
