@@ -46,11 +46,13 @@ if uploaded_file:
     vectorstore = Chroma.from_documents(chunks, embedding=embeddings)
     st.success("Vector store ready!")
 
-    llm = HuggingFaceHub(
+   from langchain_huggingface import HuggingFaceEndpoint
+    llm = HuggingFaceEndpoint(
         repo_id="google/flan-t5-base",
-        model_kwargs={"temperature": 0.5, "max_length": 512}
+        temperature=0.5,
+        max_new_tokens=512,
+        huggingfacehub_api_token=HF_TOKEN
     )
-
     qa_chain = RetrievalQA.from_chain_type(
         llm=llm,
         chain_type="stuff",
