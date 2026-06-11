@@ -62,3 +62,4 @@ if uploaded_file:
             answer = qa_chain.run(question)
         st.success("Answer:")
         st.write(answer)
+        
