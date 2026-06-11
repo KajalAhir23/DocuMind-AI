@@ -8,7 +8,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_community.llms import HuggingFaceHub
 from langchain.chains.retrieval_qa.base import RetrievalQA
-from langchain_community.embeddings import FakeEmbeddings
+from langchain_community.embeddings import HuggingFaceEmbeddings
 import tempfile
 
 st.set_page_config(page_title="DocuMind AI", page_icon="📄")
@@ -16,6 +16,7 @@ st.title("📄 DocuMind AI — PDF Q&A Chatbot")
 st.write("Upload a PDF and ask questions about it!")
 
 HF_TOKEN = os.getenv("HUGGINGFACEHUB_API_TOKEN")
+os.environ["HUGGINGFACEHUB_API_TOKEN"] = HF_TOKEN
 
 uploaded_file = st.file_uploader("Upload your PDF", type="pdf")
 
@@ -34,23 +35,11 @@ if uploaded_file:
     st.success(f"Created {len(chunks)} chunks!")
 
     st.info("Generating embeddings...")
-    import requests
-    def get_embeddings(texts):
-        API_URL = "https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2"
-        headers = {"Authorization": f"Bearer {HF_TOKEN}"}
-        response = requests.post(API_URL, headers=headers, json={"inputs": texts, "options": {"wait_for_model": True}})
-        return response.json()
-
-    from langchain_core.embeddings import Embeddings
-    from typing import List
-
-    class HFAPIEmbeddings(Embeddings):
-        def embed_documents(self, texts: List[str]) -> List[List[float]]:
-            return get_embeddings(texts)
-        def embed_query(self, text: str) -> List[float]:
-            return get_embeddings([text])[0]
-
-    embeddings = HFAPIEmbeddings()
+    embeddings = HuggingFaceEmbeddings(
+        model_name="all-MiniLM-L6-v2",
+        model_kwargs={"device": "cpu"},
+        encode_kwargs={"normalize_embeddings": True}
+    )
 
     st.info("Storing in ChromaDB...")
     vectorstore = Chroma.from_documents(chunks, embedding=embeddings)
