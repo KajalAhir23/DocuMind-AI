@@ -6,9 +6,9 @@ import streamlit as st
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
-from langchain_community.llms import HuggingFaceHub
-from langchain.chains.retrieval_qa.base import RetrievalQA
 from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_huggingface import HuggingFaceEndpoint
+from langchain.chains.retrieval_qa.base import RetrievalQA
 import tempfile
 
 st.set_page_config(page_title="DocuMind AI", page_icon="📄")
@@ -46,13 +46,13 @@ if uploaded_file:
     vectorstore = Chroma.from_documents(chunks, embedding=embeddings)
     st.success("Vector store ready!")
 
-   from langchain_huggingface import HuggingFaceEndpoint
     llm = HuggingFaceEndpoint(
         repo_id="google/flan-t5-base",
         temperature=0.5,
         max_new_tokens=512,
         huggingfacehub_api_token=HF_TOKEN
     )
+
     qa_chain = RetrievalQA.from_chain_type(
         llm=llm,
         chain_type="stuff",
