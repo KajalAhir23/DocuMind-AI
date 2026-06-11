@@ -8,7 +8,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_community.llms import HuggingFaceHub
 from langchain.chains.retrieval_qa.base import RetrievalQA
-from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
+from langchain_huggingface import HuggingFaceEndpointEmbeddings
 import tempfile
 
 st.set_page_config(page_title="DocuMind AI", page_icon="📄")
@@ -34,10 +34,9 @@ if uploaded_file:
     st.success(f"Created {len(chunks)} chunks!")
 
     st.info("Generating embeddings...")
-    embeddings = HuggingFaceInferenceAPIEmbeddings(
-        api_key=HF_TOKEN,
-        model_name="sentence-transformers/all-MiniLM-L6-v2",
-        api_url="https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2"
+    embeddings = HuggingFaceEndpointEmbeddings(
+        model="sentence-transformers/all-MiniLM-L6-v2",
+        huggingfacehub_api_token=HF_TOKEN
     )
 
     st.info("Storing in ChromaDB...")
