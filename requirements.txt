@@ -5,3 +5,4 @@ sentence-transformers
 pypdf
 streamlit
 huggingface_hub
+langchain-text-splitters
