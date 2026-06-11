@@ -8,6 +8,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_huggingface import HuggingFaceEndpoint
+from langchain_community.llms import HuggingFaceHub
 from langchain.chains import RetrievalQA
 
 # -------------------------
