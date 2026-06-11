@@ -36,7 +36,8 @@ if uploaded_file:
     st.info("Generating embeddings...")
     embeddings = HuggingFaceInferenceAPIEmbeddings(
         api_key=HF_TOKEN,
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
+        model_name="sentence-transformers/all-MiniLM-L6-v2",
+        api_url="https://api-inference.huggingface.co/pipeline/feature-extraction/sentence-transformers/all-MiniLM-L6-v2"
     )
 
     st.info("Storing in ChromaDB...")
