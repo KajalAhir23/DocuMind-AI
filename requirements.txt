@@ -8,3 +8,5 @@ pypdf
 streamlit
 huggingface_hub
 python-dotenv
+torchvision
+torch
