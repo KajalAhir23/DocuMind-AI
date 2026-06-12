@@ -9,3 +9,4 @@ pypdf
 sentence-transformers
 huggingface_hub
 pysqlite3-binary
+protobuf==3.20.3
