@@ -1,18 +1,14 @@
 # ====================================================================
-# 1. THE SQLITE & GOOGLE VERSION FIX (MUST BE AT THE ABSOLUTE TOP)
+# 1. THE SQLITE FIX (MUST BE AT THE ABSOLUTE TOP BEFORE ANY OTHER IMPORTS)
 # ====================================================================
 import sys
-import os
-
-# Force LangChain's underlying Google client to bypass v1beta and use stable v1 production
-os.environ["GOOGLE_API_VERSION"] = "v1"
-
 try:
     import pysqlite3
     sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 except ImportError:
     pass 
 
+import os
 import tempfile
 import streamlit as st
 from dotenv import load_dotenv
@@ -71,12 +67,13 @@ def initialize_rag(pdf_bytes):
     vectorstore = Chroma.from_documents(documents=chunks, embedding=embeddings)
     retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
 
-    # Step 5: Connect Gemini LLM (Clean & standard configuration)
+    # Step 5: Connect Gemini LLM (Passing api_version="v1" fixes the 404 error)
     llm = ChatGoogleGenerativeAI(
         model="gemini-1.5-flash",
         google_api_key=GOOGLE_API_KEY,
         temperature=0.3,
-        max_output_tokens=512
+        max_output_tokens=512,
+        api_version="v1"
     )
 
     # Step 6: Construct LCEL RAG Pipeline Chain
