@@ -68,8 +68,9 @@ def initialize_rag(pdf_bytes):
     retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
 
     # Step 5: Connect Gemini LLM
+    # Step 5: Connect Gemini LLM (Updated model identifier to fix the 404 version error)
     llm = ChatGoogleGenerativeAI(
-        model="gemini-1.5-flash",
+        model="gemini-1.5-flash-latest",
         google_api_key=GOOGLE_API_KEY,
         temperature=0.3,
         max_output_tokens=512
