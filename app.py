@@ -1,14 +1,18 @@
 # ====================================================================
-# 1. THE SQLITE FIX (MUST BE AT THE ABSOLUTE TOP BEFORE ANY OTHER IMPORTS)
+# 1. THE CRITICAL ENVIRONMENT & SQLITE FIXES (MUST BE AT THE ABSOLUTE TOP)
 # ====================================================================
+import os
 import sys
+
+# Force pure-Python implementation to completely bypass the protobuf version clash
+os.environ["PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION"] = "python"
+
 try:
     import pysqlite3
     sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
 except ImportError:
     pass 
 
-import os
 import tempfile
 import streamlit as st
 from dotenv import load_dotenv
@@ -67,7 +71,7 @@ def initialize_rag(pdf_bytes):
     vectorstore = Chroma.from_documents(documents=chunks, embedding=embeddings)
     retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
 
-    # Step 5: Connect Gemini LLM (Passing api_version="v1" fixes the 404 error)
+    # Step 5: Connect Stable Gemini LLM
     llm = ChatGoogleGenerativeAI(
         model="gemini-1.5-flash",
         google_api_key=GOOGLE_API_KEY,
