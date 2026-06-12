@@ -16,39 +16,34 @@ from dotenv import load_dotenv
 # Load local environment variables if available
 load_dotenv()
 
-# Grab Hugging Face Token safely from Streamlit Secrets or local .env
-try:
-    HF_TOKEN = st.secrets["HUGGINGFACEHUB_API_TOKEN"]
-except Exception:
-    HF_TOKEN = os.getenv("HUGGINGFACEHUB_API_TOKEN", "")
+# Grab Gemini API Key safely from Streamlit Secrets or local .env
+GOOGLE_API_KEY = st.secrets.get("GOOGLE_API_KEY") or os.getenv("GOOGLE_API_KEY", "")
 
 # Page Configuration
 st.set_page_config(page_title="DocuMind AI", page_icon="📄", layout="wide")
 st.title("📄 DocuMind AI")
-st.markdown("### AI-Powered PDF Question Answering System")
+st.markdown("### AI-Powered PDF Question Answering System (Gemini Edition)")
 
 # Validation check for API Token
-if not HF_TOKEN:
-    st.error("❌ Hugging Face token not found. Add HUGGINGFACEHUB_API_TOKEN in Streamlit Secrets.")
+if not GOOGLE_API_KEY:
+    st.error("❌ Google Gemini API key not found. Add GOOGLE_API_KEY in Streamlit Secrets.")
     st.stop()
-
-os.environ["HUGGINGFACEHUB_API_TOKEN"] = HF_TOKEN
 
 # ====================================================================
 # 2. CACHED RAG INITIALIZATION (Prevents DB rebuild on rerun)
 # ====================================================================
 @st.cache_resource(show_spinner=False)
 def initialize_rag(pdf_bytes):
-    # Internal imports to isolate initialization dependencies
     from langchain_community.document_loaders import PyPDFLoader
     from langchain_text_splitters import RecursiveCharacterTextSplitter
-    from langchain_huggingface import HuggingFaceEmbeddings, HuggingFaceEndpoint
+    from langchain_google_genai import ChatGoogleGenerativeAI
     from langchain_community.vectorstores import Chroma
     from langchain_core.prompts import PromptTemplate
     from langchain_core.runnables import RunnablePassthrough
     from langchain_core.output_parsers import StrOutputParser
+    from langchain_community.embeddings import HuggingFaceEmbeddings
 
-    # Streamlit passes files as bytes. Write to a safe, temporary location
+    # Write file bytes to temporary location
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
         tmp.write(pdf_bytes)
         pdf_path = tmp.name
@@ -61,7 +56,7 @@ def initialize_rag(pdf_bytes):
     splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     chunks = splitter.split_documents(documents)
 
-    # Step 3: Embed Text Vectors (CPU-optimized for Cloud instances)
+    # Step 3: Embed Text Vectors
     embeddings = HuggingFaceEmbeddings(
         model_name="sentence-transformers/all-MiniLM-L6-v2",
         model_kwargs={"device": "cpu"},
@@ -72,19 +67,22 @@ def initialize_rag(pdf_bytes):
     vectorstore = Chroma.from_documents(documents=chunks, embedding=embeddings)
     retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
 
-    # Step 5: Connect Remote Hugging Face Model Endpoint
-    llm = HuggingFaceEndpoint(
-        repo_id="google/flan-t5-large",
-        task="text2text-generation",
+    # Step 5: Connect Gemini LLM
+    llm = ChatGoogleGenerativeAI(
+        model="gemini-1.5-flash",
+        google_api_key=GOOGLE_API_KEY,
         temperature=0.3,
-        max_new_tokens=256,
-        huggingfacehub_api_token=HF_TOKEN
+        max_output_tokens=512
     )
 
     # Step 6: Construct LCEL RAG Pipeline Chain
-    template = """Use the context to answer the question.
+    template = """Use the following pieces of context to answer the question at the end. 
+If you don't know the answer, just say that you don't know, don't try to make up an answer.
+
 Context: {context}
+
 Question: {question}
+
 Answer:"""
     prompt = PromptTemplate.from_template(template)
 
@@ -95,7 +93,6 @@ Answer:"""
         | StrOutputParser()
     )
     
-    # Remove the temporary local system path safely
     try:
         os.remove(pdf_path)
     except Exception:
@@ -110,7 +107,6 @@ uploaded_file = st.file_uploader("Upload a PDF", type=["pdf"])
 
 if uploaded_file:
     try:
-        # Cache uses file bytes to identify if a new file is uploaded
         file_bytes = uploaded_file.read()
         
         with st.spinner("🧠 Initializing AI Engine & Processing PDF (This runs once)..."):
