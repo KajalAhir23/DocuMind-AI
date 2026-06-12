@@ -68,14 +68,14 @@ def initialize_rag(pdf_bytes):
     retriever = vectorstore.as_retriever(search_kwargs={"k": 3})
 
     # Step 5: Connect Gemini LLM
-    # Step 5: Connect Gemini LLM (Updated model identifier to fix the 404 version error)
+    # Step 5: Connect Gemini LLM (Configured to forcefully bypass the broken v1beta endpoint)
     llm = ChatGoogleGenerativeAI(
-        model="gemini-1.5-flash-latest",
+        model="gemini-1.5-flash",
         google_api_key=GOOGLE_API_KEY,
         temperature=0.3,
-        max_output_tokens=512
+        max_output_tokens=512,
+        client_options={"api_version": "v1"}
     )
-
     # Step 6: Construct LCEL RAG Pipeline Chain
     template = """Use the following pieces of context to answer the question at the end. 
 If you don't know the answer, just say that you don't know, don't try to make up an answer.
