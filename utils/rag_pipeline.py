@@ -1,3 +1,11 @@
+# SQLite compatibility override for older system drivers (Streamlit Community Cloud compatibility)
+try:
+    __import__('pysqlite3')
+    import sys
+    sys.modules['sqlite3'] = sys.modules.pop('pysqlite3')
+except ImportError:
+    pass
+
 import os
 import uuid
 import logging
