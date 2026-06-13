@@ -1,29 +1,5 @@
-# Virtual environment
-venv/
-env/
-
-# ChromaDB stored data
-chroma_db/
-
-# Uploaded PDFs
-uploaded_pdfs/
-
-# Environment variables / secrets
 .env
-*.env
-
-# Python cache
-__pycache__/
-*.pyc
-*.pyo
-
-# VS Code
-.vscode/
-
-# OS files
-.DS_Store
-Thumbs.db
-
-# Temp files
-*.tmp
-*.log
+venv/
+**/__pycache__/
+.chroma/
+.pytest_cache/
