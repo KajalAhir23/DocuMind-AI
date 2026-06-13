@@ -20,18 +20,34 @@ from dotenv import load_dotenv
 # Load local environment variables if available
 load_dotenv()
 
-# Grab Gemini API Key safely from Streamlit Secrets or local .env
-GOOGLE_API_KEY = st.secrets.get("GOOGLE_API_KEY") or os.getenv("GOOGLE_API_KEY", "")
-
-# Page Configuration
+# Page Configuration (Must be the first Streamlit command)
 st.set_page_config(page_title="DocuMind AI", page_icon="📄", layout="wide")
 st.title("📄 DocuMind AI")
 st.markdown("### AI-Powered PDF Question Answering System (Gemini Edition)")
 
-# Validation check for API Token
+# Grab Gemini API Key safely from Streamlit Secrets or local environment
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
+
 if not GOOGLE_API_KEY:
-    st.error("❌ Google Gemini API key not found. Add GOOGLE_API_KEY in Streamlit Secrets.")
-    st.stop()
+    try:
+        # st.secrets behaves like a dict but raises FileNotFoundError if secrets.toml is missing
+        GOOGLE_API_KEY = st.secrets.get("GOOGLE_API_KEY", "")
+    except Exception:
+        pass
+
+# Sidebar input fallback for API key if not set in environment or secrets
+if not GOOGLE_API_KEY:
+    st.sidebar.info("🔑 Google Gemini API Key required")
+    api_key_input = st.sidebar.text_input(
+        "Enter your Google Gemini API Key:", 
+        type="password", 
+        placeholder="AIzaSy..."
+    )
+    if api_key_input:
+        GOOGLE_API_KEY = api_key_input
+    else:
+        st.warning("👈 Please enter your Google Gemini API Key in the sidebar to get started.")
+        st.stop()
 
 # ====================================================================
 # 2. CACHED RAG INITIALIZATION (Prevents DB rebuild on rerun)
@@ -40,12 +56,11 @@ if not GOOGLE_API_KEY:
 def initialize_rag(pdf_bytes):
     from langchain_community.document_loaders import PyPDFLoader
     from langchain_text_splitters import RecursiveCharacterTextSplitter
-    from langchain_google_genai import ChatGoogleGenerativeAI
+    from langchain_google_genai import ChatGoogleGenerativeAI, GoogleGenerativeAIEmbeddings
     from langchain_community.vectorstores import Chroma
     from langchain_core.prompts import PromptTemplate
     from langchain_core.runnables import RunnablePassthrough
     from langchain_core.output_parsers import StrOutputParser
-    from langchain_community.embeddings import HuggingFaceEmbeddings
 
     # Write file bytes to temporary location
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp:
@@ -60,11 +75,10 @@ def initialize_rag(pdf_bytes):
     splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
     chunks = splitter.split_documents(documents)
 
-    # Step 3: Embed Text Vectors
-    embeddings = HuggingFaceEmbeddings(
-        model_name="sentence-transformers/all-MiniLM-L6-v2",
-        model_kwargs={"device": "cpu"},
-        encode_kwargs={"normalize_embeddings": True}
+    # Step 3: Embed Text Vectors (Using Cloud Google Embeddings to bypass local PyTorch c10.dll errors)
+    embeddings = GoogleGenerativeAIEmbeddings(
+        model="models/text-embedding-004",
+        google_api_key=GOOGLE_API_KEY
     )
 
     # Step 4: Construct ChromaDB Vector Index
